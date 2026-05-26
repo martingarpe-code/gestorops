@@ -2,12 +2,15 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { LoginForm } from './login-form'
 
-export const metadata = { title: 'Acceder' }
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
+  const { mode } = await searchParams
+  return { title: mode === 'signup' ? 'Crear cuenta' : 'Acceder' }
+}
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; mode?: string }>
 }) {
   const supabase = await createClient()
   const {
@@ -16,7 +19,8 @@ export default async function LoginPage({
 
   if (user) redirect('/dashboard')
 
-  const { error } = await searchParams
+  const { error, mode } = await searchParams
+  const isSignUp = mode === 'signup'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -30,14 +34,19 @@ export default async function LoginPage({
             </span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Acceder al panel
+            {isSignUp ? 'Crear cuenta' : 'Acceder al panel'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Introduce tus credenciales para continuar
+            {isSignUp ? 'Introduce tu email y una contraseña segura' : 'Introduce tus credenciales para continuar'}
           </p>
         </div>
 
         {/* Error message */}
+        {error === 'signup_failed' && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Error al crear la cuenta. El email puede estar ya registrado.
+          </div>
+        )}
         {error === 'invalid_credentials' && (
           <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             Email o contraseña incorrectos. Inténtalo de nuevo.
@@ -49,7 +58,7 @@ export default async function LoginPage({
           </div>
         )}
 
-        <LoginForm />
+        <LoginForm isSignUp={isSignUp} />
       </div>
     </div>
   )

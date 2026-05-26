@@ -17,6 +17,20 @@ export async function loginAction(formData: FormData) {
   redirect('/dashboard')
 }
 
+export async function signUpAction(formData: FormData) {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signUp({ email, password })
+
+  if (error) {
+    redirect('/login?mode=signup&error=signup_failed')
+  }
+
+  redirect('/dashboard')
+}
+
 export async function signOutAction() {
   const supabase = await createClient()
   await supabase.auth.signOut()
