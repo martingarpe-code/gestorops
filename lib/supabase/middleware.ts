@@ -25,21 +25,27 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // getUser() valida el JWT en cada request — nunca usar getSession() en middleware
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  if (
-    !user &&
-    !pathname.startsWith('/login') &&
-    !pathname.startsWith('/auth')
-  ) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // En desarrollo sin Supabase configurado, permitir acceso libre al dashboard
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  const isSupabaseConfigured =
+    supabaseUrl.length > 0 && !supabaseUrl.includes('placeholder')
+
+  if (isSupabaseConfigured) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (
+      !user &&
+      !pathname.startsWith('/login') &&
+      !pathname.startsWith('/auth')
+    ) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
