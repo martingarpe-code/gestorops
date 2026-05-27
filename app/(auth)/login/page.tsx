@@ -10,7 +10,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; mode?: string }>
+  searchParams: Promise<{ error?: string; mode?: string; msg?: string }>
 }) {
   const supabase = await createClient()
   const {
@@ -19,7 +19,7 @@ export default async function LoginPage({
 
   if (user) redirect('/dashboard')
 
-  const { error, mode } = await searchParams
+  const { error, mode, msg } = await searchParams
   const isSignUp = mode === 'signup'
 
   return (
@@ -44,7 +44,7 @@ export default async function LoginPage({
         {/* Error message */}
         {error === 'signup_failed' && (
           <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Error al crear la cuenta. El email puede estar ya registrado.
+            {msg ? decodeURIComponent(msg) : 'Error al crear la cuenta.'}
           </div>
         )}
         {error === 'invalid_credentials' && (
