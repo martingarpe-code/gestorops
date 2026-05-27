@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createDocAction, updateDocAction } from '@/app/(dashboard)/documentacion/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ export function DocEditor({ doc, clients, projects, defaultClientId, defaultProj
   defaultClientId?: string
   defaultProjectId?: string
 }) {
+  const router = useRouter()
   const isEdit = !!doc
   const action = isEdit ? updateDocAction.bind(null, doc.id) : createDocAction
   const [content, setContent] = useState(doc?.content ?? '')
@@ -97,7 +99,7 @@ export function DocEditor({ doc, clients, projects, defaultClientId, defaultProj
 
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

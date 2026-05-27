@@ -12,20 +12,20 @@ export async function createClientAction(formData: FormData) {
 
   const { data, error } = await supabase.from('clients').insert({
     name,
-    company:  (formData.get('company') as string) || null,
-    sector:   (formData.get('sector') as string) || null,
-    type:     formData.get('type') as string,
-    email:    (formData.get('email') as string) || null,
-    phone:    (formData.get('phone') as string) || null,
-    website:  (formData.get('website') as string) || null,
-    notes:    (formData.get('notes') as string) || null,
+    company:    (formData.get('company') as string) || null,
+    sector:     (formData.get('sector') as string) || null,
+    type:       formData.get('type') as string,
+    email:      (formData.get('email') as string) || null,
+    phone:      (formData.get('phone') as string) || null,
+    website:    (formData.get('website') as string) || null,
+    notes:      (formData.get('notes') as string) || null,
     created_by: user?.id,
   }).select('id').single()
 
   if (error) throw new Error(error.message)
   await logActivity(supabase, { entity_type: 'client', entity_id: data.id, action: 'created', description: `Cliente creado: ${name}`, performed_by: user?.id })
-  revalidatePath('/clientes')
-  redirect('/clientes')
+  revalidatePath('/clientes', 'layout')
+  redirect(`/clientes/${data.id}?toast=${encodeURIComponent(`Cliente "${name}" creado`)}`)
 }
 
 export async function updateClientAction(id: string, formData: FormData) {
@@ -46,9 +46,8 @@ export async function updateClientAction(id: string, formData: FormData) {
 
   if (error) throw new Error(error.message)
   await logActivity(supabase, { entity_type: 'client', entity_id: id, action: 'updated', description: `Cliente actualizado: ${name}`, performed_by: user?.id })
-  revalidatePath('/clientes')
-  revalidatePath(`/clientes/${id}`)
-  redirect(`/clientes/${id}`)
+  revalidatePath('/clientes', 'layout')
+  redirect(`/clientes/${id}?toast=Cambios+guardados`)
 }
 
 export async function deleteClientAction(id: string) {
@@ -57,6 +56,6 @@ export async function deleteClientAction(id: string) {
   const { error } = await supabase.from('clients').delete().eq('id', id)
   if (error) throw new Error(error.message)
   await logActivity(supabase, { entity_type: 'client', entity_id: id, action: 'deleted', performed_by: user?.id })
-  revalidatePath('/clientes')
-  redirect('/clientes')
+  revalidatePath('/clientes', 'layout')
+  redirect('/clientes?toast=Cliente+eliminado')
 }

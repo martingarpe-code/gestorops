@@ -21,8 +21,8 @@ export async function createRenewalAction(formData: FormData) {
   })
 
   if (error) throw new Error(error.message)
-  revalidatePath('/renovaciones')
-  redirect('/renovaciones')
+  revalidatePath('/renovaciones', 'layout')
+  redirect('/renovaciones?toast=Renovaci%C3%B3n+creada')
 }
 
 export async function updateRenewalAction(id: string, formData: FormData) {
@@ -40,15 +40,14 @@ export async function updateRenewalAction(id: string, formData: FormData) {
   }).eq('id', id)
 
   if (error) throw new Error(error.message)
-  revalidatePath('/renovaciones')
-  revalidatePath(`/renovaciones/${id}`)
-  redirect(`/renovaciones/${id}`)
+  revalidatePath('/renovaciones', 'layout')
+  redirect(`/renovaciones/${id}?toast=Renovaci%C3%B3n+actualizada`)
 }
 
 export async function deleteRenewalAction(id: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('renewals').delete().eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/renovaciones')
-  redirect('/renovaciones')
+  revalidatePath('/renovaciones', 'layout')
+  redirect('/renovaciones?toast=Renovaci%C3%B3n+eliminada')
 }

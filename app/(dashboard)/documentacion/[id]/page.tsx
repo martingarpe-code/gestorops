@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { deleteDocAction } from '../actions'
+import { DeleteButton } from '@/components/shared/delete-button'
 import { MarkdownRenderer } from '@/components/documentacion/markdown-renderer'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -31,15 +32,13 @@ export default async function DocDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <>
-      <PageHeader title={doc.title}>
+      <PageHeader
+        title={doc.title}
+        breadcrumbs={[{ label: 'Documentación', href: '/documentacion' }, { label: doc.title }]}>
         <Button asChild variant="outline" size="sm">
           <Link href={`/documentacion/${id}/editar`}><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</Link>
         </Button>
-        <form action={deleteWithId}>
-          <Button type="submit" variant="outline" size="sm" className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10">
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" />Eliminar
-          </Button>
-        </form>
+        <DeleteButton action={deleteWithId} />
       </PageHeader>
 
       <div className="flex gap-6 max-w-4xl">

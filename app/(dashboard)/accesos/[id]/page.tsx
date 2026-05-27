@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { deleteAccessAction } from '../actions'
+import { DeleteButton } from '@/components/shared/delete-button'
 import { RevealField } from '@/components/accesos/reveal-field'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -45,11 +46,7 @@ export default async function AccesoDetailPage({ params }: { params: Promise<{ i
         <Button asChild variant="outline" size="sm">
           <Link href={`/accesos/${id}/editar`}><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</Link>
         </Button>
-        <form action={deleteWithId}>
-          <Button type="submit" variant="outline" size="sm" className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10">
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" />Eliminar
-          </Button>
-        </form>
+        <DeleteButton action={deleteWithId} />
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

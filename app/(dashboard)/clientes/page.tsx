@@ -1,26 +1,48 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Button } from '@/components/ui/button'
+import { ListFilter } from '@/components/shared/list-filter'
 import { Plus, Users } from 'lucide-react'
 
 export const metadata = { title: 'Clientes' }
 
-export default async function ClientesPage() {
+export default async function ClientesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; type?: string }>
+}) {
+  const { q, type } = await searchParams
   const supabase = await createClient()
-  const { data: clients } = await supabase
-    .from('clients')
-    .select('*')
-    .order('name')
+
+  let query = supabase.from('clients').select('*').order('name')
+  if (q) query = query.ilike('name', `%${q}%`)
+  if (type && type !== 'all') query = query.eq('type', type)
+
+  const { data: clients } = await query
 
   return (
     <>
       <PageHeader title="Clientes" description={`${clients?.length ?? 0} clientes`}>
+        <Suspense fallback={null}>
+          <ListFilter placeholder="Buscar clientes…" />
+        </Suspense>
+        <div className="flex items-center gap-1 border border-border rounded-lg overflow-hidden text-xs">
+          {(['all', 'active', 'inactive', 'prospect'] as const).map(t => {
+            const labels = { all: 'Todos', active: 'Activos', inactive: 'Inactivos', prospect: 'Prospectos' }
+            const isActive = (type ?? 'all') === t
+            return (
+              <Link key={t} href={`/clientes${t !== 'all' ? `?type=${t}` : ''}`}
+                className={`px-2.5 py-1.5 transition-colors ${isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'}`}>
+                {labels[t]}
+              </Link>
+            )
+          })}
+        </div>
         <Button asChild size="sm">
-          <Link href="/clientes/nuevo">
-            <Plus className="h-4 w-4 mr-1.5" />Nuevo cliente
-          </Link>
+          <Link href="/clientes/nuevo"><Plus className="h-4 w-4 mr-1.5" />Nuevo cliente</Link>
         </Button>
       </PageHeader>
 
@@ -29,11 +51,13 @@ export default async function ClientesPage() {
           <div className="rounded-full bg-secondary p-4 mb-4">
             <Users className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="text-sm font-medium text-foreground mb-1">Sin clientes todavía</h3>
-          <p className="text-sm text-muted-foreground mb-4">Añade tu primer cliente para empezar.</p>
-          <Button asChild size="sm">
-            <Link href="/clientes/nuevo">Añadir cliente</Link>
-          </Button>
+          <h3 className="text-sm font-medium text-foreground mb-1">
+            {q ? `Sin resultados para "${q}"` : 'Sin clientes todavía'}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            {q ? 'Prueba con otro término de búsqueda.' : 'Añade tu primer cliente para empezar.'}
+          </p>
+          {!q && <Button asChild size="sm"><Link href="/clientes/nuevo">Añadir cliente</Link></Button>}
         </div>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">

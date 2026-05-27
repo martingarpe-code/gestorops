@@ -1,4 +1,31 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+function SearchTrigger() {
+  const [isMac, setIsMac] = useState(false)
+
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().includes('MAC'))
+  }, [])
+
+  function openPalette() {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: !isMac, metaKey: isMac, bubbles: true }))
+  }
+
+  return (
+    <button
+      onClick={openPalette}
+      className="flex items-center gap-2 w-full h-7 rounded-md bg-secondary/50 border border-border px-2.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors cursor-text"
+    >
+      <span className="flex-1 text-left">Buscar...</span>
+      <kbd className="text-xs bg-background/60 px-1.5 py-0.5 rounded border border-border font-sans">
+        {isMac ? '⌘K' : 'Ctrl K'}
+      </kbd>
+    </button>
+  )
+}
 
 export function SidebarHeader() {
   return (
@@ -10,10 +37,7 @@ export function SidebarHeader() {
         </Link>
       </div>
       <div className="px-3 pb-2">
-        <div className="flex items-center gap-2 w-full h-7 rounded-md bg-secondary/50 border border-border px-2.5 text-xs text-muted-foreground cursor-text select-none">
-          <span className="flex-1">Buscar...</span>
-          <kbd className="text-xs bg-background/60 px-1.5 py-0.5 rounded border border-border">⌘K</kbd>
-        </div>
+        <SearchTrigger />
       </div>
     </div>
   )

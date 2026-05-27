@@ -13,7 +13,10 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <PageHeader title={`Editar — ${client.name}`} />
+      <PageHeader
+        title={`Editar — ${client.name}`}
+        breadcrumbs={[{ label: 'Clientes', href: '/clientes' }, { label: client.name, href: `/clientes/${id}` }, { label: 'Editar' }]}
+      />
       <div className="max-w-2xl">
         <ClientForm client={client} />
       </div>

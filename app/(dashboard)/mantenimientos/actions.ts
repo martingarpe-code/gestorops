@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -21,7 +21,7 @@ export async function createMaintenanceAction(formData: FormData) {
   })
 
   if (error) throw new Error(error.message)
-  revalidatePath('/mantenimientos')
+  revalidatePath('/mantenimientos', 'layout')
   redirect('/mantenimientos')
 }
 
@@ -40,7 +40,7 @@ export async function updateMaintenanceAction(id: string, formData: FormData) {
   }).eq('id', id)
 
   if (error) throw new Error(error.message)
-  revalidatePath('/mantenimientos')
+  revalidatePath('/mantenimientos', 'layout')
   revalidatePath(`/mantenimientos/${id}`)
   redirect(`/mantenimientos/${id}`)
 }
@@ -49,7 +49,7 @@ export async function deleteMaintenanceAction(id: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('maintenances').delete().eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/mantenimientos')
+  revalidatePath('/mantenimientos', 'layout')
   redirect('/mantenimientos')
 }
 

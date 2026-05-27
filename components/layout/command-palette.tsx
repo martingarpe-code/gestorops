@@ -6,7 +6,7 @@ import { Command } from 'cmdk'
 import {
   LayoutDashboard, Users, FolderKanban, Wrench, AlertCircle,
   KeyRound, RefreshCcw, FileText, Server, CheckSquare, BarChart2,
-  Settings, Plus, Search,
+  Settings, Plus, Search, Clock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { label: 'Infraestructura', href: '/infraestructura', icon: Server },
   { label: 'Tareas',          href: '/tareas',          icon: CheckSquare },
   { label: 'Analítica',       href: '/analitica',       icon: BarChart2 },
+  { label: 'Historial',       href: '/historial',        icon: Clock },
   { label: 'Configuración',   href: '/configuracion',   icon: Settings },
 ]
 

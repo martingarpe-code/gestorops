@@ -1,6 +1,7 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createProjectAction, updateProjectAction } from '@/app/(dashboard)/proyectos/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,6 +43,7 @@ export function ProjectForm({ project, clients, defaultClientId }: {
   clients: { id: string; name: string }[]
   defaultClientId?: string
 }) {
+  const router = useRouter()
   const isEdit = !!project
   const action = isEdit ? updateProjectAction.bind(null, project.id) : createProjectAction
   const techStackValue = Array.isArray(project?.tech_stack) ? (project.tech_stack as string[]).join(', ') : ''
@@ -95,7 +97,7 @@ export function ProjectForm({ project, clients, defaultClientId }: {
 
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

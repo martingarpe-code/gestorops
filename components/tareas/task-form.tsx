@@ -1,6 +1,7 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createTaskAction, updateTaskAction } from '@/app/(dashboard)/tareas/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ export function TaskForm({ task, clients, projects, defaultClientId, defaultProj
   defaultClientId?: string
   defaultProjectId?: string
 }) {
+  const router = useRouter()
   const isEdit = !!task
   const action = isEdit ? updateTaskAction.bind(null, task.id) : createTaskAction
 
@@ -73,7 +75,7 @@ export function TaskForm({ task, clients, projects, defaultClientId, defaultProj
       </div>
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

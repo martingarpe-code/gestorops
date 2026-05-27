@@ -1,6 +1,7 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createClientAction, updateClientAction } from '@/app/(dashboard)/clientes/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ function SubmitButton({ isEdit }: { isEdit: boolean }) {
 }
 
 export function ClientForm({ client }: { client?: Tables<'clients'> }) {
+  const router = useRouter()
   const isEdit = !!client
   const action = isEdit
     ? updateClientAction.bind(null, client.id)
@@ -56,7 +58,7 @@ export function ClientForm({ client }: { client?: Tables<'clients'> }) {
 
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

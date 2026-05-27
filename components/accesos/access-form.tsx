@@ -1,6 +1,7 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createAccessAction, updateAccessAction } from '@/app/(dashboard)/accesos/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ export function AccessForm({ access, clients, defaultClientId }: {
   clients: { id: string; name: string }[]
   defaultClientId?: string
 }) {
+  const router = useRouter()
   const isEdit = !!access
   const action = isEdit ? updateAccessAction.bind(null, access.id) : createAccessAction
 
@@ -85,7 +87,7 @@ export function AccessForm({ access, clients, defaultClientId }: {
 
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

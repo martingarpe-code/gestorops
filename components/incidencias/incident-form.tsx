@@ -1,6 +1,7 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createIncidentAction, updateIncidentAction } from '@/app/(dashboard)/incidencias/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ export function IncidentForm({ incident, clients, projects, defaultClientId, def
   defaultClientId?: string
   defaultProjectId?: string
 }) {
+  const router = useRouter()
   const isEdit = !!incident
   const action = isEdit ? updateIncidentAction.bind(null, incident.id) : createIncidentAction
 
@@ -84,7 +86,7 @@ export function IncidentForm({ incident, clients, projects, defaultClientId, def
       </div>
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

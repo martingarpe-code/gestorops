@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { deleteRenewalAction } from '../actions'
+import { DeleteButton } from '@/components/shared/delete-button'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,15 +27,13 @@ export default async function RenovacionDetailPage({ params }: { params: Promise
 
   return (
     <>
-      <PageHeader title={renewal.name}>
+      <PageHeader
+        title={renewal.name}
+        breadcrumbs={[{ label: 'Renovaciones', href: '/renovaciones' }, { label: renewal.name }]}>
         <Button asChild variant="outline" size="sm">
           <Link href={`/renovaciones/${id}/editar`}><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</Link>
         </Button>
-        <form action={deleteWithId}>
-          <Button type="submit" variant="outline" size="sm" className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10">
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" />Eliminar
-          </Button>
-        </form>
+        <DeleteButton action={deleteWithId} />
       </PageHeader>
       <div className="max-w-lg">
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">

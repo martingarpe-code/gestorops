@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -19,7 +19,7 @@ export async function createInfraAction(formData: FormData) {
     created_by:  user?.id,
   })
   if (error) throw new Error(error.message)
-  revalidatePath('/infraestructura')
+  revalidatePath('/infraestructura', 'layout')
   redirect('/infraestructura')
 }
 
@@ -35,13 +35,13 @@ export async function updateInfraAction(id: string, formData: FormData) {
     status:      formData.get('status') as string,
   }).eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/infraestructura')
+  revalidatePath('/infraestructura', 'layout')
   redirect('/infraestructura')
 }
 
 export async function deleteInfraAction(id: string) {
   const supabase = await createClient()
   await supabase.from('infrastructure_items').delete().eq('id', id)
-  revalidatePath('/infraestructura')
+  revalidatePath('/infraestructura', 'layout')
   redirect('/infraestructura')
 }

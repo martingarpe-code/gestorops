@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -20,7 +20,7 @@ export async function createTaskAction(formData: FormData) {
     created_by:  user?.id,
   })
   if (error) throw new Error(error.message)
-  revalidatePath('/tareas')
+  revalidatePath('/tareas', 'layout')
   redirect('/tareas')
 }
 
@@ -28,7 +28,7 @@ export async function updateTaskStatusAction(id: string, status: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('tasks').update({ status }).eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/tareas')
+  revalidatePath('/tareas', 'layout')
 }
 
 export async function updateTaskAction(id: string, formData: FormData) {
@@ -43,13 +43,13 @@ export async function updateTaskAction(id: string, formData: FormData) {
     due_date:    (formData.get('due_date') as string) || null,
   }).eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/tareas')
+  revalidatePath('/tareas', 'layout')
   redirect('/tareas')
 }
 
 export async function deleteTaskAction(id: string) {
   const supabase = await createClient()
   await supabase.from('tasks').delete().eq('id', id)
-  revalidatePath('/tareas')
+  revalidatePath('/tareas', 'layout')
   redirect('/tareas')
 }

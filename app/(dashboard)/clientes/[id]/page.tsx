@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2, FolderKanban, Wrench, AlertCircle, RefreshCcw } from 'lucide-react'
+import { Pencil, FolderKanban, Wrench, AlertCircle, RefreshCcw } from 'lucide-react'
 import { deleteClientAction } from '../actions'
+import { DeleteButton } from '@/components/shared/delete-button'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -33,15 +34,15 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <PageHeader title={client.name} description={client.company ?? undefined}>
+      <PageHeader
+        title={client.name}
+        description={client.company ?? undefined}
+        breadcrumbs={[{ label: 'Clientes', href: '/clientes' }, { label: client.name }]}
+      >
         <Button asChild variant="outline" size="sm">
           <Link href={`/clientes/${id}/editar`}><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</Link>
         </Button>
-        <form action={deleteWithId}>
-          <Button type="submit" variant="outline" size="sm" className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10">
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" />Eliminar
-          </Button>
-        </form>
+        <DeleteButton action={deleteWithId} itemName={client.name} />
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

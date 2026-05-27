@@ -1,6 +1,7 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createMaintenanceAction, updateMaintenanceAction } from '@/app/(dashboard)/mantenimientos/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ export function MaintenanceForm({ maintenance, clients, defaultClientId }: {
   clients: { id: string; name: string }[]
   defaultClientId?: string
 }) {
+  const router = useRouter()
   const isEdit = !!maintenance
   const action = isEdit ? updateMaintenanceAction.bind(null, maintenance.id) : createMaintenanceAction
 
@@ -70,7 +72,7 @@ export function MaintenanceForm({ maintenance, clients, defaultClientId }: {
       </div>
       <div className="flex items-center gap-3">
         <SubmitButton isEdit={isEdit} />
-        <Button type="button" variant="outline" onClick={() => history.back()}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </form>
   )

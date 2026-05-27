@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -22,7 +22,7 @@ export async function createDocAction(formData: FormData) {
   }).select('id').single()
 
   if (error) throw new Error(error.message)
-  revalidatePath('/documentacion')
+  revalidatePath('/documentacion', 'layout')
   redirect(`/documentacion/${data.id}`)
 }
 
@@ -41,7 +41,7 @@ export async function updateDocAction(id: string, formData: FormData) {
   }).eq('id', id)
 
   if (error) throw new Error(error.message)
-  revalidatePath('/documentacion')
+  revalidatePath('/documentacion', 'layout')
   revalidatePath(`/documentacion/${id}`)
   redirect(`/documentacion/${id}`)
 }
@@ -49,6 +49,6 @@ export async function updateDocAction(id: string, formData: FormData) {
 export async function deleteDocAction(id: string) {
   const supabase = await createClient()
   await supabase.from('documents').delete().eq('id', id)
-  revalidatePath('/documentacion')
+  revalidatePath('/documentacion', 'layout')
   redirect('/documentacion')
 }
