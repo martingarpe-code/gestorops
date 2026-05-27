@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { logActivity } from '@/lib/activity'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -20,12 +21,14 @@ export async function createIncidentAction(formData: FormData) {
   })
 
   if (error) throw new Error(error.message)
+  await logActivity(supabase, { entity_type: 'incident', action: 'created', description: `Incidencia creada: ${formData.get('title')}`, performed_by: user?.id })
   revalidatePath('/incidencias')
   redirect('/incidencias')
 }
 
 export async function updateIncidentAction(id: string, formData: FormData) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   const status = formData.get('status') as string
 
   const { error } = await supabase.from('incidents').update({
@@ -41,6 +44,7 @@ export async function updateIncidentAction(id: string, formData: FormData) {
   }).eq('id', id)
 
   if (error) throw new Error(error.message)
+  await logActivity(supabase, { entity_type: 'incident', entity_id: id, action: 'updated', description: `Estado: ${status}`, performed_by: user?.id })
   revalidatePath('/incidencias')
   revalidatePath(`/incidencias/${id}`)
   redirect(`/incidencias/${id}`)
