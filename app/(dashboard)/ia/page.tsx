@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
-import { Bot, Plus } from 'lucide-react'
+import { Bot, Plus, FileText } from 'lucide-react'
 
 export const metadata = { title: 'Asistente IA' }
 
@@ -28,7 +28,7 @@ export default async function IAPage() {
   const supabase = await createClient()
   const { data: tasks } = await supabase
     .from('ai_tasks')
-    .select('*, projects(name), repositories(github_repo)')
+    .select('*, projects(name:title), repositories(github_repo)')
     .order('created_at', { ascending: false })
     .limit(50)
 
@@ -58,32 +58,43 @@ export default async function IAPage() {
           {tasks.map(task => {
             const st = statusConfig[task.status] ?? statusConfig.queued
             return (
-              <Link key={task.id} href={`/ia/${task.id}`}
-                className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 hover:border-primary/30 hover:bg-card/80 transition-all group">
+              <div key={task.id} className={`flex items-center gap-4 rounded-lg border bg-card px-4 py-3 transition-all ${
+                task.status === 'completed' ? 'border-green-500/20' : 'border-border'
+              }`}>
                 <div className={`h-2 w-2 rounded-full shrink-0 ${st.dot}`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                    {task.title}
-                  </p>
+                  <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {(task.projects as { name: string } | null)?.name ?? '—'}
                     {(task.repositories as { github_repo: string } | null)?.github_repo &&
                       ` · ${(task.repositories as { github_repo: string }).github_repo}`}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-xs bg-secondary px-2 py-0.5 rounded text-muted-foreground">
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs bg-secondary px-2 py-0.5 rounded text-muted-foreground hidden sm:inline">
                     {typeLabels[task.type] ?? task.type}
                   </span>
                   <span className={`text-xs font-medium ${st.color}`}>{st.label}</span>
                   {task.cost_usd && (
-                    <span className="text-xs text-muted-foreground">${task.cost_usd.toFixed(3)}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">${task.cost_usd.toFixed(3)}</span>
                   )}
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
                     {new Date(task.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                   </span>
+                  {task.status === 'completed' && task.result_summary ? (
+                    <Link href={`/ia/${task.id}`}
+                      className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300 font-medium border border-green-500/30 hover:border-green-400/50 bg-green-500/5 hover:bg-green-500/10 px-2.5 py-1 rounded-md transition-all">
+                      <FileText className="h-3 w-3" />
+                      Ver informe
+                    </Link>
+                  ) : (
+                    <Link href={`/ia/${task.id}`}
+                      className="text-xs text-muted-foreground hover:text-foreground border border-border hover:border-border/80 px-2.5 py-1 rounded-md transition-all">
+                      Ver →
+                    </Link>
+                  )}
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

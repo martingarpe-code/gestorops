@@ -30,6 +30,7 @@ export async function createAITaskAction(formData: FormData) {
   const repoId = (formData.get('repository_id') as string) || null
   const incidentId = (formData.get('incident_id') as string) || null
   const customInstructions = (formData.get('custom_instructions') as string) || null
+  const model = (formData.get('model') as string) || 'claude-sonnet-4-6'
 
   const { data, error } = await supabase.from('ai_tasks').insert({
     project_id:    projectId,
@@ -39,7 +40,7 @@ export async function createAITaskAction(formData: FormData) {
     level:         TASK_LEVELS[type] ?? 1,
     title:         TASK_TITLES[type] ?? 'Tarea IA',
     status:        'queued',
-    input_params:  customInstructions ? { custom_instructions: customInstructions } : {},
+    input_params:  { ...(customInstructions ? { custom_instructions: customInstructions } : {}), model },
     created_by:    user?.id,
   }).select('id').single()
 
@@ -75,8 +76,38 @@ export async function rejectTaskAction(taskId: string, notes?: string) {
   redirect('/ia?toast=Tarea+rechazada')
 }
 
+export async function retryTaskAction(taskId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: original } = await supabase
+    .from('ai_tasks')
+    .select('type, project_id, repository_id, incident_id, level, title, input_params')
+    .eq('id', taskId).single()
+
+  if (!original) throw new Error('Tarea no encontrada')
+
+  const { data, error } = await supabase.from('ai_tasks').insert({
+    project_id:    original.project_id,
+    repository_id: original.repository_id,
+    incident_id:   original.incident_id,
+    type:          original.type,
+    level:         original.level,
+    title:         original.title,
+    status:        'queued',
+    input_params:  original.input_params ?? {},
+    created_by:    user?.id,
+  }).select('id').single()
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/ia', 'layout')
+  redirect(`/ia/${data.id}`)
+}
+
 export async function cancelTaskAction(taskId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
   await supabase.from('ai_tasks').update({ status: 'cancelled' }).eq('id', taskId)
   revalidatePath('/ia', 'layout')
   redirect('/ia?toast=Tarea+cancelada')

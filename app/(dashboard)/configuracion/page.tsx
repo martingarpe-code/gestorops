@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ExportButtons } from '@/components/configuracion/export-buttons'
@@ -9,6 +10,7 @@ export default async function ConfiguracionPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const [
+    { data: aiStats },
     { count: clients },
     { count: projects },
     { count: incidents },
@@ -16,6 +18,7 @@ export default async function ConfiguracionPage() {
     { count: renewals },
     { count: logs },
   ] = await Promise.all([
+    supabase.from('ai_tasks').select('cost_usd, created_at').eq('status', 'completed'),
     supabase.from('clients').select('*', { count: 'exact', head: true }),
     supabase.from('projects').select('*', { count: 'exact', head: true }),
     supabase.from('incidents').select('*', { count: 'exact', head: true }),
@@ -23,6 +26,12 @@ export default async function ConfiguracionPage() {
     supabase.from('renewals').select('*', { count: 'exact', head: true }),
     supabase.from('activity_log').select('*', { count: 'exact', head: true }),
   ])
+
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const totalSpent = (aiStats ?? []).reduce((sum, t) => sum + (t.cost_usd ?? 0), 0)
+  const monthSpent = (aiStats ?? []).filter(t => t.created_at >= startOfMonth).reduce((sum, t) => sum + (t.cost_usd ?? 0), 0)
+  const totalTasks = aiStats?.length ?? 0
 
   return (
     <>
@@ -66,6 +75,30 @@ export default async function ConfiguracionPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* IA spending */}
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-foreground">Gasto IA (Anthropic)</h2>
+            <Link href="https://console.anthropic.com/settings/billing" target="_blank"
+              className="text-xs text-primary hover:underline">Ver saldo →</Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="text-center rounded-md bg-secondary/50 p-3">
+              <p className="text-xl font-semibold text-foreground tabular-nums">${monthSpent.toFixed(3)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Este mes</p>
+            </div>
+            <div className="text-center rounded-md bg-secondary/50 p-3">
+              <p className="text-xl font-semibold text-foreground tabular-nums">${totalSpent.toFixed(3)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Total acumulado</p>
+            </div>
+            <div className="text-center rounded-md bg-secondary/50 p-3">
+              <p className="text-xl font-semibold text-foreground tabular-nums">{totalTasks}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Tareas completadas</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Solo refleja el coste de tareas lanzadas desde GestorOps. El saldo real puede consultarse en la consola de Anthropic.</p>
         </div>
 
         {/* Export */}

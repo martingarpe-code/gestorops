@@ -219,43 +219,33 @@ railway up
 
 ---
 
-## 8. PENDIENTE — PRÓXIMOS PASOS
+## 8. ESTADO ACTUAL — COMPLETADO EN SESIÓN 28/05/2026
 
-### Inmediato (Fase 1 MVP IA)
-1. **Obtener `SUPABASE_SERVICE_KEY`**
-   - Supabase Dashboard → Settings → API → Legacy keys → `service_role`
-   - Añadir a `G:\Gestorops-worker\.env`
+### ✅ Fase 1 MVP IA — COMPLETADA
+- Worker desplegado en Railway (servicio: `gestorops-worker`, proyecto: `3e8a5506-2153-4dac-9a53-3d5407166953`)
+- GitHub App **GestorOps-Prod** creada en `martingarpe-code` (App ID: `3897317`)
+- Private key: `G:\Gestorops-worker\gestorops-prod.private-key.pem`
+- `ENCRYPTION_SECRET` rotado a clave segura de 64 hex chars
+- PostCSS XSS corregido (override en package.json)
+- Supabase Realtime habilitado en `ai_tasks` + `ai_task_logs`
+- Logs en tiempo real en `/ia/[id]`
+- Selector de modelo (Haiku / Sonnet / Opus) con estimación de coste
+- Botón Relanzar en vista de tarea
+- Historial por proyecto con tareas IA + actividad
+- Copiar/descargar informes y artefactos
+- Acceso directo en escritorio: `G:\Gestorops\start.bat`
 
-2. **Obtener `ANTHROPIC_API_KEY`**
-   - console.anthropic.com → API Keys
-   - Añadir a `G:\Gestorops-worker\.env`
+### Repositorios conectados
+- `martingarpe-code/gestorops` (público, sin installation_id)
+- `martingarpe-code/athenva-ops` (privado, installation_id: `136365211`)
 
-3. **Desplegar worker en Railway**
-   - `cd G:\Gestorops-worker && railway login && railway up`
-   - Configurar variables de entorno en Railway dashboard
-   - Variables necesarias: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `ANTHROPIC_API_KEY`, `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY` (inline con \n)
-
-4. **Instalar GitHub App en un repositorio de prueba**
-   - GitHub → Settings → Applications → Configure "GestorOps"
-   - Seleccionar el repo de prueba
-   - Copiar `installation_id` al registro en la tabla `repositories`
-
-5. **Conectar primer repo desde GestorOps**
-   - Ir a un proyecto en el gestor
-   - Usar el formulario "Conectar repositorio"
-   - Lanzar tarea "Analizar proyecto"
-
-### Pendiente Fase 1-2
+### Pendiente Fase 2
 - Ruta API `/api/github/webhook` para recibir eventos de GitHub
 - Ruta API `/api/github/callback` para OAuth de instalación
-- Supabase Realtime en `/ia/[id]` para logs en tiempo real
-- Polling automático en la vista de tarea activa
-
-### Pendiente futuro
-- Sidebar colapsable (Bloque 2 pendiente)
-- Analítica avanzada
-- Deploy en `gestor.athenva.com` (configurar DNS Vercel)
-- Configurar `ENCRYPTION_SECRET` con valor seguro para producción
+- Deploy en `gestor.athenva.com` (Vercel + DNS)
+- Sidebar colapsable
+- Salt PBKDF2 por-registro en vault de accesos
+- RLS con aislamiento por usuario (cuando haya colaboradores)
 
 ---
 

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { approveTaskAction, rejectTaskAction, cancelTaskAction } from '@/app/(dashboard)/ia/actions'
+import { useState, useEffect, useRef } from 'react'
+import { approveTaskAction, rejectTaskAction, cancelTaskAction, retryTaskAction } from '@/app/(dashboard)/ia/actions'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, FileText, Terminal, AlertTriangle, GitBranch, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, FileText, Terminal, AlertTriangle, GitBranch, Clock, Copy, Download, Check, RotateCcw } from 'lucide-react'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   queued:           { label: 'En cola',              color: 'text-zinc-400',  bg: 'bg-zinc-400/10' },
@@ -25,10 +26,17 @@ const LOG_COLORS: Record<string, string> = {
   output: 'text-green-400', system: 'text-muted-foreground', info: 'text-muted-foreground',
 }
 
+const MODEL_LABELS: Record<string, string> = {
+  'claude-haiku-4-5-20251001': 'Haiku 4.5',
+  'claude-sonnet-4-6':         'Sonnet 4.6',
+  'claude-opus-4-7':           'Opus 4.7',
+}
+
 type Task = {
   id: string; title?: string; type: string; status: string; level: number
   result_summary?: string | null; cost_usd?: number | null; cost_tokens?: number | null
   created_at: string; completed_at?: string | null
+  input_params?: { model?: string } | null
   projects?: { name: string } | null
   repositories?: { github_repo: string; github_owner: string; github_url: string } | null
   incidents?: { title: string } | null
@@ -38,30 +46,114 @@ type Artifact = { type: string; filename: string; content?: string | null; size_
 type Run = { run_number: number; status: string; tokens_input?: number | null; tokens_output?: number | null }
 type Approval = { decision: string; notes?: string | null }
 
-export function TaskDetailView({ task, logs, artifacts, runs, approvals }: {
+export function TaskDetailView({ task: initialTask, logs: initialLogs, artifacts: initialArtifacts, runs, approvals }: {
   task: Task
   logs: Log[]
   artifacts: Artifact[]
   runs: Run[]
   approvals: Approval[]
 }) {
-  const [activeTab, setActiveTab] = useState<'logs' | 'report' | 'artifacts'>('logs')
+  const [activeTab, setActiveTab] = useState<'logs' | 'report' | 'artifacts'>(
+    initialTask.status === 'completed' && initialArtifacts.some(a => a.type === 'report') ? 'report' : 'logs'
+  )
   const [notes, setNotes] = useState('')
+  const [copied, setCopied] = useState<string | null>(null)
+  const [task, setTask] = useState(initialTask)
+  const [logs, setLogs] = useState(initialLogs)
+  const [artifacts, setArtifacts] = useState(initialArtifacts)
+  const logsEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll logs to bottom on new entries
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [logs])
+
+  // Supabase Realtime subscriptions
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Subscribe to new logs for this task
+    const logsSub = supabase
+      .channel(`task-logs-${task.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'ai_task_logs',
+        filter: `task_id=eq.${task.id}`,
+      }, payload => {
+        setLogs(prev => [...prev, payload.new as Log])
+      })
+      .subscribe()
+
+    // Subscribe to task status changes
+    const taskSub = supabase
+      .channel(`task-status-${task.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'ai_tasks',
+        filter: `id=eq.${task.id}`,
+      }, async payload => {
+        setTask(prev => ({ ...prev, ...payload.new }))
+        // When task completes, fetch fresh artifacts
+        if (payload.new.status === 'completed' || payload.new.status === 'failed') {
+          const { data } = await supabase
+            .from('ai_task_artifacts')
+            .select('*')
+            .eq('task_id', task.id)
+            .order('created_at')
+          if (data) setArtifacts(data)
+          if (payload.new.status === 'completed') setActiveTab('report')
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(logsSub)
+      supabase.removeChannel(taskSub)
+    }
+  }, [task.id])
+
+  function copyText(text: string, id: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(id)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  function downloadFile(content: string, filename: string) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const st = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.queued
-  const mainReport = artifacts.find(a => a.type === 'report')
+  const mainReport = artifacts.find(a => a.type === 'report') ?? artifacts.find(a => a.type === 'log' && a.filename === 'claude_output.txt')
   const hasApproval = approvals.length > 0
-  const canApprove = task.status === 'waiting_approval' || task.status === 'completed'
+  const canApprove = (task.status === 'waiting_approval' || task.status === 'completed') && task.level >= 3
+  const modelLabel = MODEL_LABELS[task.input_params?.model ?? ''] ?? task.input_params?.model ?? 'Sonnet 4.6'
 
   const LEVEL_LABELS = ['', 'Solo lectura', 'Propuesta', 'Modifica rama', 'Abre PR', 'Auto']
 
   return (
     <div className="space-y-4">
       {/* Status bar */}
-      <div className={`rounded-lg border border-border ${st.bg} p-4 flex items-center justify-between gap-4`}>
+      <div className={`rounded-lg border p-4 flex items-center justify-between gap-4 ${
+        task.status === 'running'
+          ? 'border-blue-500/50 bg-blue-400/10 animate-pulse-border'
+          : `border-border ${st.bg}`
+      }`}>
         <div className="flex items-center gap-3">
           <div className={`flex items-center gap-2 ${st.color}`}>
-            {task.status === 'running' && <span className="h-2 w-2 rounded-full bg-current animate-pulse" />}
+            {task.status === 'running' && (
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-400" />
+              </span>
+            )}
             <span className="font-semibold text-sm">{st.label}</span>
           </div>
           {task.cost_usd != null && (
@@ -70,14 +162,24 @@ export function TaskDetailView({ task, logs, artifacts, runs, approvals }: {
           {task.cost_tokens != null && (
             <span className="text-xs text-muted-foreground">{task.cost_tokens.toLocaleString()} tokens</span>
           )}
+          <span className="text-xs text-muted-foreground">{modelLabel}</span>
         </div>
-        {task.status === 'queued' && (
-          <form action={cancelTaskAction.bind(null, task.id)}>
-            <Button type="submit" variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10 h-7 text-xs">
-              Cancelar
-            </Button>
-          </form>
-        )}
+        <div className="flex items-center gap-2">
+          {(task.status === 'queued' || task.status === 'running') && (
+            <form action={cancelTaskAction.bind(null, task.id)}>
+              <Button type="submit" variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10 h-7 text-xs">
+                Cancelar
+              </Button>
+            </form>
+          )}
+          {(task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled' || task.status === 'rejected') && (
+            <form action={retryTaskAction.bind(null, task.id)}>
+              <Button type="submit" variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+                <RotateCcw className="h-3 w-3" />Relanzar
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Approval panel */}
@@ -129,7 +231,13 @@ export function TaskDetailView({ task, logs, artifacts, runs, approvals }: {
           {activeTab === 'logs' && (
             <div className="rounded-lg border border-border bg-card overflow-hidden">
               {logs.length === 0 ? (
-                <p className="text-sm text-muted-foreground p-4">Sin logs todavía.</p>
+                <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-400" />
+                  </span>
+                  {task.status === 'queued' ? 'En cola, el worker lo recogerá en breve…' : 'Iniciando…'}
+                </div>
               ) : (
                 <div className="max-h-96 overflow-y-auto p-3 space-y-1 font-mono">
                   {logs.map((log, i) => {
@@ -144,17 +252,45 @@ export function TaskDetailView({ task, logs, artifacts, runs, approvals }: {
                       </div>
                     )
                   })}
+                  {task.status === 'running' && (
+                    <div className="flex items-center gap-1.5 py-1 text-xs text-blue-400">
+                      <span className="h-1 w-1 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="h-1 w-1 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="h-1 w-1 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  )}
+                  <div ref={logsEndRef} />
                 </div>
               )}
             </div>
           )}
 
           {activeTab === 'report' && (
-            <div className="rounded-lg border border-border bg-card p-5 max-h-[500px] overflow-y-auto">
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
               {mainReport?.content ? (
-                <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">{mainReport.content}</pre>
+                <>
+                  <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-border bg-secondary/20">
+                    <button
+                      onClick={() => copyText(mainReport.content!, 'report')}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {copied === 'report' ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied === 'report' ? 'Copiado' : 'Copiar'}
+                    </button>
+                    <button
+                      onClick={() => downloadFile(mainReport.content!, mainReport.filename)}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Descargar
+                    </button>
+                  </div>
+                  <div className="p-5 max-h-[500px] overflow-y-auto">
+                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">{mainReport.content}</pre>
+                  </div>
+                </>
               ) : (
-                <p className="text-sm text-muted-foreground">El informe se generará al completar la tarea.</p>
+                <p className="text-sm text-muted-foreground p-5">El informe se generará al completar la tarea.</p>
               )}
             </div>
           )}
@@ -173,6 +309,24 @@ export function TaskDetailView({ task, logs, artifacts, runs, approvals }: {
                     </p>
                   </div>
                   {a.is_sensitive && <span className="text-xs text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">Sensible</span>}
+                  {a.content && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => copyText(a.content!, `artifact-${i}`)}
+                        className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copiar"
+                      >
+                        {copied === `artifact-${i}` ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => downloadFile(a.content!, a.filename)}
+                        className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                        title="Descargar"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -187,6 +341,7 @@ export function TaskDetailView({ task, logs, artifacts, runs, approvals }: {
               {([
                 ['Proyecto', task.projects?.name],
                 ['Repositorio', task.repositories ? `${task.repositories.github_owner}/${task.repositories.github_repo}` : null],
+                ['Modelo', modelLabel],
                 ['Incidencia', task.incidents?.title],
                 ['Nivel', `${task.level} — ${LEVEL_LABELS[task.level] ?? ''}`],
                 ['Creada', new Date(task.created_at).toLocaleString('es-ES')],
