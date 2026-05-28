@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, FolderKanban, Wrench, AlertCircle,
-  KeyRound, RefreshCcw, FileText, Server, CheckSquare, BarChart2, Settings, Clock,
+  KeyRound, RefreshCcw, FileText, Server, CheckSquare, BarChart2, Settings, Clock, Bot,
 } from 'lucide-react'
 
 export type NavCounts = {
@@ -17,6 +17,7 @@ export type NavCounts = {
 
 const navPrimary = [
   { label: 'Dashboard',      href: '/dashboard',       icon: LayoutDashboard, countKey: undefined },
+  { label: 'Asistente IA',   href: '/ia',              icon: Bot,             countKey: undefined },
   { label: 'Clientes',       href: '/clientes',        icon: Users,           countKey: undefined },
   { label: 'Proyectos',      href: '/proyectos',       icon: FolderKanban,    countKey: undefined },
   { label: 'Mantenimientos', href: '/mantenimientos',  icon: Wrench,          countKey: 'maintenances' as const },
