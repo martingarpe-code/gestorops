@@ -4,9 +4,11 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge, PriorityBadge } from '@/components/shared/status-badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, AlertCircle } from 'lucide-react'
+import { Pencil, AlertCircle, GitBranch, Bot } from 'lucide-react'
 import { deleteProjectAction } from '../actions'
 import { DeleteButton } from '@/components/shared/delete-button'
+import { ConnectRepoForm } from '@/components/ia/connect-repo-form'
+import { disconnectRepositoryAction } from './repositorios/actions'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -24,6 +26,7 @@ export default async function ProyectoDetailPage({ params }: { params: Promise<{
 
   const { data: incidents } = await supabase.from('incidents').select('id,title,status,priority').eq('project_id', id).order('opened_at', { ascending: false }).limit(10)
 
+  const { data: repos } = await supabase.from('repositories').select('*').eq('project_id', id)
   const deleteWithId = deleteProjectAction.bind(null, id)
   const client = project.clients as { id: string; name: string } | null
   const techStack = Array.isArray(project.tech_stack) ? project.tech_stack as string[] : []
@@ -76,7 +79,43 @@ export default async function ProyectoDetailPage({ params }: { params: Promise<{
           )}
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          {/* Repositorios */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <GitBranch className="h-3.5 w-3.5" />Repositorios
+              </h2>
+              <Button asChild variant="ghost" size="sm" className="h-6 text-xs px-2">
+                <Link href={`/ia/nueva?proyecto=${id}`}><Bot className="h-3 w-3 mr-1" />Lanzar IA</Link>
+              </Button>
+            </div>
+            {repos && repos.length > 0 ? (
+              <div className="space-y-2 mb-3">
+                {repos.map(repo => {
+                  const disconnectAction = disconnectRepositoryAction.bind(null, repo.id, id)
+                  return (
+                    <div key={repo.id} className="flex items-center justify-between py-1.5 px-2 rounded bg-secondary/30">
+                      <a href={repo.github_url} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors">
+                        <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
+                        {repo.github_owner}/{repo.github_repo}
+                        <span className="text-xs text-muted-foreground">({repo.default_branch})</span>
+                      </a>
+                      <form action={disconnectAction}>
+                        <button type="submit" className="text-xs text-muted-foreground hover:text-destructive transition-colors">Desconectar</button>
+                      </form>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-3">Sin repositorios conectados</p>
+            )}
+            <ConnectRepoForm projectId={id} />
+          </div>
+
+          {/* Incidencias */}
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -107,3 +146,4 @@ export default async function ProyectoDetailPage({ params }: { params: Promise<{
     </>
   )
 }
+
