@@ -179,7 +179,7 @@ export function TaskDetailView({ task: initialTask, logs: initialLogs, artifacts
               </Button>
             </form>
           )}
-          {task.status === 'completed' && task.level <= 2 && task.repositories && mainReport?.content && (
+          {task.status === 'completed' && task.level <= 2 && task.repositories && mainReport?.content && task.type !== 'apply_suggestions' && (
             <form action={applyFixesAction.bind(null, task.id)}>
               <Button type="submit" size="sm" className="h-7 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500">
                 <Wand2 className="h-3 w-3" />Aplicar fixes

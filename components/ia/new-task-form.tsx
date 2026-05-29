@@ -81,7 +81,7 @@ export function NewTaskForm({ projects, incidents, initialRepos, defaultProjectI
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-foreground">Proyecto *</label>
           <select
-            name="project_id_display"
+            name="_project_selector"
             value={selectedProject}
             onChange={e => setSelectedProject(e.target.value)}
             required

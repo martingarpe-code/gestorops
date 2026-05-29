@@ -9,10 +9,13 @@ export async function createAccessAction(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const rawUsername = (formData.get('username') as string)?.trim()
+  const rawPassword = (formData.get('password') as string)?.trim()
+  const rawNotes    = (formData.get('notes') as string)?.trim()
   const [usernameEnc, passwordEnc, notesEnc] = await Promise.all([
-    encrypt(formData.get('username') as string),
-    encrypt(formData.get('password') as string),
-    encrypt(formData.get('notes') as string),
+    rawUsername ? encrypt(rawUsername) : Promise.resolve(null),
+    rawPassword ? encrypt(rawPassword) : Promise.resolve(null),
+    rawNotes    ? encrypt(rawNotes)    : Promise.resolve(null),
   ])
 
   // FIX: use .select('id').single() to get the ID directly — no race condition
@@ -43,6 +46,7 @@ export async function createAccessAction(formData: FormData) {
 export async function updateAccessAction(id: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
 
   const rawUsername = formData.get('username') as string
   const rawPassword = formData.get('password') as string
@@ -67,7 +71,7 @@ export async function updateAccessAction(id: string, formData: FormData) {
   const { error } = await supabase.from('technical_accesses').update(update).eq('id', id)
   if (error) throw new Error(error.message)
 
-  await supabase.from('access_log').insert({ access_id: id, action: 'edited', performed_by: user?.id })
+  await supabase.from('access_log').insert({ access_id: id, action: 'edited', performed_by: user.id })
 
   revalidatePath('/accesos', 'layout')
   redirect(`/accesos/${id}?toast=Acceso+actualizado`)
@@ -94,6 +98,6 @@ export async function revealFieldAction(id: string, field: 'username' | 'passwor
   if (!encrypted) return ''
 
   const plain = await decrypt(encrypted)
-  await supabase.from('access_log').insert({ access_id: id, action: 'viewed', performed_by: user?.id })
+  await supabase.from('access_log').insert({ access_id: id, action: 'viewed', performed_by: user.id })
   return plain
 }
