@@ -1,6 +1,8 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
+import rehypeSanitize from 'rehype-sanitize'
 
 export function MarkdownRenderer({ content }: { content: string }) {
   return (
@@ -15,7 +17,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
       prose-hr:border-border
       prose-li:text-muted-foreground
       prose-table:text-sm prose-th:text-foreground prose-td:text-muted-foreground">
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{content}</ReactMarkdown>
     </div>
   )
 }
