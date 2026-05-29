@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { approveTaskAction, rejectTaskAction, cancelTaskAction, retryTaskAction } from '@/app/(dashboard)/ia/actions'
+import { approveTaskAction, rejectTaskAction, cancelTaskAction, retryTaskAction, applyFixesAction } from '@/app/(dashboard)/ia/actions'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, FileText, Terminal, AlertTriangle, GitBranch, Clock, Copy, Download, Check, RotateCcw } from 'lucide-react'
+import { CheckCircle, XCircle, FileText, Terminal, AlertTriangle, GitBranch, Clock, Copy, Download, Check, RotateCcw, Wand2 } from 'lucide-react'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   queued:           { label: 'En cola',              color: 'text-zinc-400',  bg: 'bg-zinc-400/10' },
@@ -176,6 +176,13 @@ export function TaskDetailView({ task: initialTask, logs: initialLogs, artifacts
             <form action={retryTaskAction.bind(null, task.id)}>
               <Button type="submit" variant="outline" size="sm" className="h-7 text-xs gap-1.5">
                 <RotateCcw className="h-3 w-3" />Relanzar
+              </Button>
+            </form>
+          )}
+          {task.status === 'completed' && task.level <= 2 && task.repositories && mainReport?.content && (
+            <form action={applyFixesAction.bind(null, task.id)}>
+              <Button type="submit" size="sm" className="h-7 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500">
+                <Wand2 className="h-3 w-3" />Aplicar fixes
               </Button>
             </form>
           )}
