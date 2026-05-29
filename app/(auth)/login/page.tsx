@@ -27,9 +27,11 @@ export default async function LoginPage({
       <div className="w-full max-w-sm space-y-8">
         {/* Brand */}
         <div className="space-y-2 text-center">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="h-8 w-8 rounded-md bg-primary" />
-            <span className="text-xl font-semibold tracking-tight text-foreground">
+          <div className="flex items-center justify-center gap-2.5 mb-6">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
+              <span className="text-sm font-bold text-white leading-none select-none">G</span>
+            </div>
+            <span className="text-xl font-bold tracking-tight text-foreground">
               GestorOps
             </span>
           </div>

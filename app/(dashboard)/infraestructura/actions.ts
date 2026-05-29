@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 export async function createInfraAction(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
 
   const { error } = await supabase.from('infrastructure_items').insert({
     client_id:   formData.get('client_id') as string,

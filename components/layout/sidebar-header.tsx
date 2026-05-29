@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Search } from 'lucide-react'
 
 function SearchTrigger() {
   const [isMac, setIsMac] = useState(false)
@@ -17,10 +18,11 @@ function SearchTrigger() {
   return (
     <button
       onClick={openPalette}
-      className="flex items-center gap-2 w-full h-7 rounded-md bg-secondary/50 border border-border px-2.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors cursor-text"
+      className="flex items-center gap-2 w-full h-8 rounded-md bg-secondary/40 border border-border/60 px-3 text-xs text-muted-foreground hover:border-primary/30 hover:bg-secondary/70 hover:text-foreground transition-all cursor-text"
     >
+      <Search className="h-3 w-3 shrink-0" />
       <span className="flex-1 text-left">Buscar...</span>
-      <kbd className="text-xs bg-background/60 px-1.5 py-0.5 rounded border border-border font-sans">
+      <kbd className="text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/60 font-sans leading-tight">
         {isMac ? '⌘K' : 'Ctrl K'}
       </kbd>
     </button>
@@ -29,14 +31,16 @@ function SearchTrigger() {
 
 export function SidebarHeader() {
   return (
-    <div className="flex h-14 shrink-0 flex-col border-b border-sidebar-border">
-      <div className="flex h-10 items-center px-4 mt-1">
+    <div className="flex h-[60px] shrink-0 flex-col border-b border-sidebar-border">
+      <div className="flex h-11 items-center px-4">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="h-6 w-6 rounded-sm bg-primary shrink-0" />
-          <span className="text-sm font-semibold text-foreground tracking-tight">GestorOps</span>
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shrink-0 flex items-center justify-center shadow-sm">
+            <span className="text-xs font-bold text-white leading-none select-none">G</span>
+          </div>
+          <span className="text-sm font-bold text-foreground tracking-tight">GestorOps</span>
         </Link>
       </div>
-      <div className="px-3 pb-2">
+      <div className="px-3 pb-2.5">
         <SearchTrigger />
       </div>
     </div>

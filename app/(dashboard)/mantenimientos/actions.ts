@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 export async function createMaintenanceAction(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
 
   const { error } = await supabase.from('maintenances').insert({
     client_id:      formData.get('client_id') as string,
@@ -56,6 +57,7 @@ export async function deleteMaintenanceAction(id: string) {
 export async function upsertEntryAction(maintenanceId: string, period: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
   const status = formData.get('status') as string
 
   const { data: existing } = await supabase

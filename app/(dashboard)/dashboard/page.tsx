@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge, PriorityBadge } from '@/components/shared/status-badge'
@@ -10,20 +11,32 @@ function daysUntil(dateStr: string) {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 }
 
-function StatCard({ icon: Icon, label, value, sub, href, accent }: {
+function StatCard({ icon: Icon, label, value, sub, href, iconBg, iconFg, alertBorder }: {
   icon: React.ComponentType<{ className?: string }>
-  label: string; value: number | string; sub?: string; href: string; accent?: string
+  label: string
+  value: number | string
+  sub?: string
+  href: string
+  iconBg?: string
+  iconFg?: string
+  alertBorder?: 'red' | 'amber'
 }) {
   return (
-    <Link href={href} className="group rounded-lg border border-border bg-card p-4 hover:border-primary/30 hover:bg-card/80 transition-all">
-      <div className="flex items-start justify-between mb-3">
-        <div className={`rounded-md p-2 ${accent ?? 'bg-secondary'}`}>
-          <Icon className="h-4 w-4 text-muted-foreground" />
+    <Link href={href} className={cn(
+      'group rounded-xl border bg-card p-4 transition-all duration-200',
+      'hover:bg-secondary/30',
+      alertBorder === 'red'   && 'border-red-500/20 hover:border-red-500/40',
+      alertBorder === 'amber' && 'border-amber-500/20 hover:border-amber-500/40',
+      !alertBorder            && 'border-border hover:border-primary/20',
+    )}>
+      <div className="mb-3">
+        <div className={cn('inline-flex items-center justify-center rounded-lg p-1.5', iconBg ?? 'bg-secondary')}>
+          <Icon className={cn('h-4 w-4', iconFg ?? 'text-muted-foreground')} />
         </div>
       </div>
-      <div className={`text-2xl font-semibold tabular-nums mb-0.5 ${accent ? 'text-red-400' : 'text-foreground'}`}>{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
+      <p className="text-3xl font-bold tabular-nums text-foreground leading-none mb-1">{value}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {sub && <p className="text-xs text-muted-foreground/60 mt-0.5">{sub}</p>}
     </Link>
   )
 }
@@ -65,26 +78,47 @@ export default async function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <StatCard icon={Users}        label="Clientes activos"    value={clientCount ?? 0}                href="/clientes" />
-        <StatCard icon={FolderKanban} label="Proyectos activos"   value={projectCount ?? 0}               href="/proyectos" />
-        <StatCard icon={AlertCircle}  label="Incidencias abiertas" value={incidents?.length ?? 0}
+        <StatCard
+          icon={Users} label="Clientes activos" value={clientCount ?? 0} href="/clientes"
+          iconBg="bg-blue-500/10" iconFg="text-blue-400"
+        />
+        <StatCard
+          icon={FolderKanban} label="Proyectos activos" value={projectCount ?? 0} href="/proyectos"
+          iconBg="bg-violet-500/10" iconFg="text-violet-400"
+        />
+        <StatCard
+          icon={AlertCircle} label="Incidencias abiertas" value={incidents?.length ?? 0} href="/incidencias"
           sub={criticalIncidents > 0 ? `${criticalIncidents} críticas` : undefined}
-          href="/incidencias" accent={criticalIncidents > 0 ? 'bg-red-500/15' : undefined} />
-        <StatCard icon={Wrench}       label="Mant. pendientes"    value={pendingMaint}
-          sub="este mes" href="/mantenimientos" accent={pendingMaint > 0 ? 'bg-amber-500/15' : undefined} />
-        <StatCard icon={RefreshCcw}   label="Renov. próximas"     value={expiring30}
-          sub="en 30 días" href="/renovaciones" accent={expiring30 > 0 ? 'bg-amber-500/15' : undefined} />
-        <StatCard icon={KeyRound}     label="Accesos guardados"   value={accessCount ?? 0}                href="/accesos" />
+          iconBg={criticalIncidents > 0 ? 'bg-red-500/10' : 'bg-secondary'}
+          iconFg={criticalIncidents > 0 ? 'text-red-400' : 'text-muted-foreground'}
+          alertBorder={criticalIncidents > 0 ? 'red' : undefined}
+        />
+        <StatCard
+          icon={Wrench} label="Mant. pendientes" value={pendingMaint} href="/mantenimientos" sub="este mes"
+          iconBg={pendingMaint > 0 ? 'bg-amber-500/10' : 'bg-secondary'}
+          iconFg={pendingMaint > 0 ? 'text-amber-400' : 'text-muted-foreground'}
+          alertBorder={pendingMaint > 0 ? 'amber' : undefined}
+        />
+        <StatCard
+          icon={RefreshCcw} label="Renov. próximas" value={expiring30} href="/renovaciones" sub="en 30 días"
+          iconBg={expiring30 > 0 ? 'bg-orange-500/10' : 'bg-secondary'}
+          iconFg={expiring30 > 0 ? 'text-orange-400' : 'text-muted-foreground'}
+          alertBorder={expiring30 > 0 ? 'amber' : undefined}
+        />
+        <StatCard
+          icon={KeyRound} label="Accesos guardados" value={accessCount ?? 0} href="/accesos"
+          iconBg="bg-secondary" iconFg="text-muted-foreground"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Open incidents */}
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-400" />Incidencias abiertas
             </h2>
-            <Link href="/incidencias/nuevo" className="text-xs text-primary hover:underline">+ Nueva</Link>
+            <Link href="/incidencias/nuevo" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">+ Nueva</Link>
           </div>
           {!incidents?.length ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Sin incidencias abiertas</p>
@@ -107,12 +141,12 @@ export default async function DashboardPage() {
         </div>
 
         {/* Upcoming renewals */}
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <RefreshCcw className="h-4 w-4 text-amber-400" />Próximas renovaciones
             </h2>
-            <Link href="/renovaciones/nuevo" className="text-xs text-primary hover:underline">+ Nueva</Link>
+            <Link href="/renovaciones/nuevo" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">+ Nueva</Link>
           </div>
           {!renewals?.length ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Sin renovaciones registradas</p>
@@ -140,12 +174,12 @@ export default async function DashboardPage() {
         </div>
 
         {/* Pending maintenance */}
-        <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2">
+        <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Wrench className="h-4 w-4 text-amber-400" />Mantenimientos — {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
             </h2>
-            <Link href="/mantenimientos" className="text-xs text-primary hover:underline">Ver todos</Link>
+            <Link href="/mantenimientos" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">Ver todos</Link>
           </div>
           {!maintenances?.length ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Sin contratos de mantenimiento activos</p>

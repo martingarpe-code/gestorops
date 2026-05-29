@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { logActivity } from '@/lib/activity'
@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation'
 export async function createClientAction(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
   const name = formData.get('name') as string
 
   const { data, error } = await supabase.from('clients').insert({
@@ -31,6 +32,7 @@ export async function createClientAction(formData: FormData) {
 export async function updateClientAction(id: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
   const name = formData.get('name') as string
 
   const { error } = await supabase.from('clients').update({
@@ -53,6 +55,7 @@ export async function updateClientAction(id: string, formData: FormData) {
 export async function deleteClientAction(id: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
   const { error } = await supabase.from('clients').delete().eq('id', id)
   if (error) throw new Error(error.message)
   await logActivity(supabase, { entity_type: 'client', entity_id: id, action: 'deleted', performed_by: user?.id })

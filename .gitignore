@@ -2,6 +2,7 @@
 
 # Local utility scripts
 *.py
+*.pdf
 
 # dependencies
 /node_modules

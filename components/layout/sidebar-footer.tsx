@@ -9,18 +9,18 @@ export async function SidebarFooter() {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const displayName = user?.email?.split('@')[0] ?? 'Usuario'
+  const initial = displayName[0]?.toUpperCase() ?? 'U'
+
   return (
     <div className="border-t border-sidebar-border px-3 py-3">
-      <div className="flex items-center gap-3">
-        <div className="h-7 w-7 rounded-full bg-secondary shrink-0 flex items-center justify-center">
-          <span className="text-xs font-medium text-foreground">
-            {user?.email?.[0]?.toUpperCase() ?? 'U'}
-          </span>
+      <div className="flex items-center gap-2.5">
+        <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 shrink-0 flex items-center justify-center shadow-sm">
+          <span className="text-xs font-bold text-white leading-none select-none">{initial}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-foreground truncate">
-            {user?.email ?? '—'}
-          </p>
+          <p className="text-xs font-semibold text-foreground truncate capitalize">{displayName}</p>
+          <p className="text-[10px] text-muted-foreground/70 truncate">{user?.email}</p>
         </div>
         <form action={signOutAction}>
           <Button

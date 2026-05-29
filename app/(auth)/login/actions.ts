@@ -17,19 +17,9 @@ export async function loginAction(formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function signUpAction(formData: FormData) {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-
-  const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({ email, password })
-
-  if (error) {
-    const msg = encodeURIComponent(error.message)
-    redirect(`/login?mode=signup&error=signup_failed&msg=${msg}`)
-  }
-
-  redirect('/dashboard')
+export async function signUpAction(_formData: FormData) {
+  // Registro público deshabilitado — gestionar usuarios desde Supabase Dashboard
+  redirect('/login?error=signup_disabled')
 }
 
 export async function signOutAction() {

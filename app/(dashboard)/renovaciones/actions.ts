@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 export async function createRenewalAction(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
 
   const { error } = await supabase.from('renewals').insert({
     client_id:    formData.get('client_id') as string,

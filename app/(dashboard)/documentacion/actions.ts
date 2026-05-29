@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 export async function createDocAction(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
 
   const tagsRaw = (formData.get('tags') as string) || ''
   const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
