@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          {
+          ...(process.env.NODE_ENV === 'production' ? [{
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
               "frame-ancestors 'none'",
             ].join('; '),
-          },
+          }] : []),
         ],
       },
     ]

@@ -61,10 +61,14 @@ export function NewTaskForm({ projects, incidents, initialRepos, defaultProjectI
     setSelectedRepo('')
     if (!selectedProject) { setRepos([]); return }
     setLoadingRepos(true)
+    let isMounted = true
     const supabase = createClient()
     supabase.from('repositories').select('id, github_repo, github_owner')
       .eq('project_id', selectedProject).eq('status', 'active')
-      .then(({ data }) => { setRepos(data ?? []); setLoadingRepos(false) })
+      .then(({ data }) => {
+        if (isMounted) { setRepos(data ?? []); setLoadingRepos(false) }
+      })
+    return () => { isMounted = false }
   }, [selectedProject])
 
   return (

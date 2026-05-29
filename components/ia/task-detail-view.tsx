@@ -71,8 +71,8 @@ export function TaskDetailView({ task: initialTask, logs: initialLogs, artifacts
   // Supabase Realtime subscriptions
   useEffect(() => {
     const supabase = createClient()
+    let isMounted = true
 
-    // Subscribe to new logs for this task
     const logsSub = supabase
       .channel(`task-logs-${task.id}`)
       .on('postgres_changes', {
@@ -81,11 +81,10 @@ export function TaskDetailView({ task: initialTask, logs: initialLogs, artifacts
         table: 'ai_task_logs',
         filter: `task_id=eq.${task.id}`,
       }, payload => {
-        setLogs(prev => [...prev, payload.new as Log])
+        if (isMounted) setLogs(prev => [...prev, payload.new as Log])
       })
       .subscribe()
 
-    // Subscribe to task status changes
     const taskSub = supabase
       .channel(`task-status-${task.id}`)
       .on('postgres_changes', {
@@ -94,21 +93,22 @@ export function TaskDetailView({ task: initialTask, logs: initialLogs, artifacts
         table: 'ai_tasks',
         filter: `id=eq.${task.id}`,
       }, async payload => {
+        if (!isMounted) return
         setTask(prev => ({ ...prev, ...payload.new }))
-        // When task completes, fetch fresh artifacts
         if (payload.new.status === 'completed' || payload.new.status === 'failed') {
           const { data } = await supabase
             .from('ai_task_artifacts')
             .select('*')
             .eq('task_id', task.id)
             .order('created_at')
-          if (data) setArtifacts(data)
-          if (payload.new.status === 'completed') setActiveTab('report')
+          if (isMounted && data) setArtifacts(data)
+          if (isMounted && payload.new.status === 'completed') setActiveTab('report')
         }
       })
       .subscribe()
 
     return () => {
+      isMounted = false
       supabase.removeChannel(logsSub)
       supabase.removeChannel(taskSub)
     }

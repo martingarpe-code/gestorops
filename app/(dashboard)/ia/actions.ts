@@ -107,7 +107,7 @@ export async function applyFixesAction(taskId: string) {
       source_type:    original.type,
       report_content: report?.content?.slice(0, 10000) ?? null,
     },
-    created_by: user.id,
+    created_by: user?.id,
   }).select('id').single()
 
   if (error) throw new Error(error.message)
@@ -118,6 +118,7 @@ export async function applyFixesAction(taskId: string) {
 export async function retryTaskAction(taskId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
 
   const { data: original } = await supabase
     .from('ai_tasks')

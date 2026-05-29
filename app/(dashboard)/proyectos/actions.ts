@@ -19,7 +19,7 @@ export async function createProjectAction(formData: FormData) {
     priority:           formData.get('priority') as string,
     start_date:         (formData.get('start_date') as string) || null,
     estimated_end_date: (formData.get('estimated_end_date') as string) || null,
-    budget:             (formData.get('budget') as string) ? Number(formData.get('budget')) : null,
+    budget:             (formData.get('budget') as string)?.trim() ? Number(formData.get('budget')) : null,
     notes:              (formData.get('notes') as string) || null,
     created_by:         user?.id,
   }).select('id').single()
@@ -43,7 +43,7 @@ export async function updateProjectAction(id: string, formData: FormData) {
     start_date:         (formData.get('start_date') as string) || null,
     estimated_end_date: (formData.get('estimated_end_date') as string) || null,
     actual_end_date:    (formData.get('actual_end_date') as string) || null,
-    budget:             (formData.get('budget') as string) ? Number(formData.get('budget')) : null,
+    budget:             (formData.get('budget') as string)?.trim() ? Number(formData.get('budget')) : null,
     notes:              (formData.get('notes') as string) || null,
   }).eq('id', id)
 
